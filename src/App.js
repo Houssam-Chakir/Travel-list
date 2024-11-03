@@ -1,21 +1,33 @@
 import { useState } from "react";
 
-const initialItems = [
-  { id: 1, description: "Passports", quantity: 2, packed: false },
-  { id: 2, description: "Socks", quantity: 12, packed: true },
-];
-
+//f APP component
 export default function App() {
   const [items, setItems] = useState([
     { id: 1, description: "Passports", quantity: 2, packed: false },
     { id: 2, description: "Socks", quantity: 12, packed: true },
   ]);
 
+  function handleAddItems(newItem) {
+    setItems((items) => [...items, newItem]);
+  }
+
+  function handleDeleteItem(id) {
+    setItems((items) => {
+      items.filter((item) => item.id !== id);
+    });
+  }
+
+  function handlePackItem(id) {
+    setItems((items) => {
+      return items.map((item) => (item.id === id) ? {...item, packed: !item.packed} : item);
+    });
+  }
+
   return (
     <div className='app'>
       <Logo />
-      <Form setItems={setItems} items={items} />
-      <PackingList items={items} />
+      <Form onAddItems={handleAddItems} />
+      <PackingList items={items} onDeleteItem={handleDeleteItem} onPackItem={handlePackItem} />
       <Stats />
     </div>
   );
@@ -23,8 +35,9 @@ export default function App() {
 function Logo() {
   return <h1>🏝️ Far Away 🧳</h1>;
 }
-function Form(props) {
-  const {items, setItems} = props
+
+//f/ form component
+function Form({ onAddItems }) {
   const [description, setDescription] = useState("");
   const [quantity, setQuantity] = useState(1);
 
@@ -33,7 +46,7 @@ function Form(props) {
     if (!description) return;
 
     const newItem = { description, quantity, packed: false, id: Date.now() };
-    setItems([...items, newItem])
+    onAddItems(newItem);
 
     setDescription("");
     setQuantity(1);
@@ -56,30 +69,50 @@ function Form(props) {
     </form>
   );
 }
+
+//f/ pakcing list component
 function PackingList(props) {
-  const { items } = props;
+  const { items, onDeleteItem, onPackItem } = props;
+  console.log("items: ", items);
   return (
     <div className='list'>
       <ul>
         {items.map((item, itemIndex) => {
-          return <Item item={item} index={itemIndex} />;
+          return <Item item={item} index={itemIndex} onDeleteItem={onDeleteItem} onPackItem={onPackItem} />;
         })}
       </ul>
     </div>
   );
 }
 
+//f/ item component
 function Item(props) {
-  const { item, index } = props;
+  const { item, index, onDeleteItem, onPackItem } = props;
+
   return (
     <li key={index}>
+      <input
+        type='checkbox'
+        checked={item.packed}
+        onChange={() => {
+          onPackItem(item.id);
+        }}
+      />
       <span style={item.packed ? { textDecoration: "line-through" } : {}}>
         {item.quantity} {item.description}
       </span>
-      <button>❌</button>
+      <button
+        onClick={() => {
+          onDeleteItem(item.id);
+        }}
+      >
+        ❌
+      </button>
     </li>
   );
 }
+
+//f/ stats component
 function Stats() {
   return (
     <footer className='stats'>
