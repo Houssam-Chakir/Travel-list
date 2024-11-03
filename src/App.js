@@ -6,6 +6,8 @@ export default function App() {
     { id: 1, description: "Passports", quantity: 2, packed: false },
     { id: 2, description: "Socks", quantity: 12, packed: true },
   ]);
+  const itemsNum = items.length;
+  const packedItemsNum = items.filter((item) => item.packed).length;
 
   function handleAddItems(newItem) {
     setItems((items) => [...items, newItem]);
@@ -19,7 +21,7 @@ export default function App() {
 
   function handlePackItem(id) {
     setItems((items) => {
-      return items.map((item) => (item.id === id) ? {...item, packed: !item.packed} : item);
+      return items.map((item) => (item.id === id ? { ...item, packed: !item.packed } : item));
     });
   }
 
@@ -28,7 +30,7 @@ export default function App() {
       <Logo />
       <Form onAddItems={handleAddItems} />
       <PackingList items={items} onDeleteItem={handleDeleteItem} onPackItem={handlePackItem} />
-      <Stats />
+      <Stats itemsNum={itemsNum} packedItemsNum={packedItemsNum} />
     </div>
   );
 }
@@ -73,14 +75,28 @@ function Form({ onAddItems }) {
 //f/ pakcing list component
 function PackingList(props) {
   const { items, onDeleteItem, onPackItem } = props;
+  const [sortBy, setSortBy] = useState("packed");
+  let sortedItems;
+
+  if (sortBy === "input") sortedItems = items;
+  if (sortBy === "description") sortedItems = items.slice().sort((a, b) => a.description.localeCompare(b.description));
+  if (sortBy === "packed") sortedItems = items.slice().sort((a, b) => Number(a.packed) - Number(b.packed));
+
   console.log("items: ", items);
   return (
     <div className='list'>
       <ul>
-        {items.map((item, itemIndex) => {
+        {sortedItems.map((item, itemIndex) => {
           return <Item item={item} index={itemIndex} onDeleteItem={onDeleteItem} onPackItem={onPackItem} />;
         })}
       </ul>
+      <div className='actions'>
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value='input'>Sort by input order</option>
+          <option value='description'>Sort by description</option>
+          <option value='packed'>Sort by packed status</option>
+        </select>
+      </div>
     </div>
   );
 }
@@ -113,10 +129,13 @@ function Item(props) {
 }
 
 //f/ stats component
-function Stats() {
+function Stats({ itemsNum, packedItemsNum }) {
   return (
     <footer className='stats'>
-      <em> You have x items on your list, and you already packed x (x%9)</em>
+      <em>
+        {" "}
+        You have {itemsNum} items on your list, and you already packed {packedItemsNum} ({(packedItemsNum / itemsNum) * 100}%)
+      </em>
     </footer>
   );
 }
